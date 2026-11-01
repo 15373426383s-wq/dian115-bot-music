@@ -4,6 +4,7 @@ export const SOURCES=[
  {id:'qq',name:'QQ 音乐',short:'QQ',color:'#15966b',hint:'搜索 · 多音质解析 · 歌词 · 高音质需登录'},
  {id:'kugou',name:'酷狗音乐',short:'酷狗',color:'#2c83cd',hint:'搜索 · 歌单 · 歌词 · 免费模式可用'},
  {id:'migu',name:'咪咕音乐',short:'咪咕',color:'#b64dab',hint:'无损优先 · 公开免费接口已失效，暂不可用'},
+ {id:'pt',name:'PT 站',short:'PT',color:'#7c5cff',hint:'宿主已配置的 PT 站 · 种子搜索与下载器推送'},
  {id:'kuwo',name:'酷我音乐',short:'酷我',color:'#b77d16',hint:'自定义扩展 · 需导入支持酷我的音源',lxOnly:true}
 ];
 // Sources that return playable audio WITHOUT any account cookie. NetEase and
@@ -11,7 +12,7 @@ export const SOURCES=[
 // cookie for high quality and Migu's free endpoint is currently dead, so both
 // are excluded from 免费模式.
 export const FREE_SOURCES=['netease','kugou'];
-export const DEFAULT_SETTINGS={sources:['netease','qq','kugou','migu'],resolverMode:'original',lxSourceId:'',lxCatalogs:{},limit:20,quality:'best',freeMode:true,merge:true,lyrics:true,cover:true,autoPlay:false,destination:'',proxy:'',cookies:{},cookieRecords:{},downloadTimeout:3600,maxDownloadMB:0,theme:'system',reduceTransparency:false};
+export const DEFAULT_SETTINGS={sources:['netease','qq','kugou','migu'],resolverMode:'original',lxSourceId:'',lxCatalogs:{},limit:20,quality:'best',freeMode:true,merge:true,lyrics:true,cover:true,autoPlay:false,destination:'',proxy:'',cookies:{},cookieRecords:{},downloadTimeout:3600,maxDownloadMB:0,theme:'system',reduceTransparency:false,ptDownloader:''};
 export const SOURCE_NAME=Object.fromEntries(SOURCES.map(s=>[s.id,s.short]));
 export const cloneData=value=>JSON.parse(JSON.stringify(value));
 // Business IDs are not credentials; insecure HTTP hosts may lack randomUUID.
@@ -26,12 +27,12 @@ export function settingsOf(value){const v={...DEFAULT_SETTINGS,...value};v.sourc
  if(v.freeMode&&v.resolverMode!=='lx'){
   const ck=v.cookies||{};
   const has=id=>typeof ck[id]==='string'&&!!ck[id].trim();
-  const allowed=v.sources.filter(id=>FREE_SOURCES.includes(id)||has(id));
+  const allowed=v.sources.filter(id=>FREE_SOURCES.includes(id)||id==='pt'||has(id));
   v.sources=allowed.length?allowed:[...FREE_SOURCES];
   const anyCK=SOURCES.some(s=>has(s.id));
   if(!anyCK&&(v.quality==='best'||v.quality==='lossless'))v.quality='high';
  }
- if(!['light','dark','system'].includes(v.theme))v.theme='system';v.destination=typeof v.destination==='string'?v.destination.trim():'';v.proxy=typeof v.proxy==='string'?v.proxy.trim():'';v.cookies=Object.fromEntries(SOURCES.map(s=>[s.id,typeof v.cookies?.[s.id]==='string'?v.cookies[s.id]:'']));v.cookieRecords=Object.fromEntries(SOURCES.map(s=>[s.id,Array.isArray(v.cookieRecords?.[s.id])?v.cookieRecords[s.id]:[]]));v.downloadTimeout=Math.max(60,Math.min(86400,Math.floor(Number(v.downloadTimeout))||3600));v.maxDownloadMB=Math.max(0,Math.min(1048576,Math.floor(Number(v.maxDownloadMB))||0));return v;}
+ if(!['light','dark','system'].includes(v.theme))v.theme='system';v.destination=typeof v.destination==='string'?v.destination.trim():'';v.proxy=typeof v.proxy==='string'?v.proxy.trim():'';v.cookies=Object.fromEntries(SOURCES.map(s=>[s.id,typeof v.cookies?.[s.id]==='string'?v.cookies[s.id]:'']));v.cookieRecords=Object.fromEntries(SOURCES.map(s=>[s.id,Array.isArray(v.cookieRecords?.[s.id])?v.cookieRecords[s.id]:[]]));v.downloadTimeout=Math.max(60,Math.min(86400,Math.floor(Number(v.downloadTimeout))||3600));v.maxDownloadMB=Math.max(0,Math.min(1048576,Math.floor(Number(v.maxDownloadMB))||0));v.ptDownloader=typeof v.ptDownloader==='string'?v.ptDownloader.trim():'';return v;}
 export function errorText(e){return String(e?.data?.error||e?.message||e||'操作失败').replace(/(?:Cookie|Authorization)\s*[:=][^\n]+/gi,'凭据已隐藏').replace(/([a-z][a-z0-9+.-]*:\/\/)[^\s/@]+:[^\s/@]+@/gi,'$1***@').replace(/(https?:\/\/[^\s?#]+)[?#][^\s]*/gi,'$1?…').slice(0,700);}
 export function text(value){return String(value??'').replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim();}
 export function safeName(value){const clean=text(value).replace(/[\\/:*?"<>|\x00-\x1f]/g,'').replace(/\.{2,}/g,'.').trim();let result='',bytes=0;for(const character of clean){const length=new TextEncoder().encode(character).length;if(bytes+length>180)break;result+=character;bytes+=length;}return result||'未知曲目';}

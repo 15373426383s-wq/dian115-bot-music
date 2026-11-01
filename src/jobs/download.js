@@ -2,6 +2,7 @@ import {absoluteDirectory} from '../lib/directories.js';
 import {settingsOf,normalizeSong,safeName,errorText} from '../lib/model.js';
 import {resolveSong,closeLX,songLyrics,songPicture,mediaOptions} from '../lib/lx-sources.js';
 import {PROVIDERS} from '../lib/providers.js';
+import {ptSubmit} from '../lib/pt.js';
 import {request,mediaURL,header,DOWNLOAD_HEADERS} from '../lib/network.js';
 import {run as manage,recover as recoverManage} from './manage.js';
 const extensions=new Set(['mp3','flac','ape','m4a','aac','ogg','wav','wma','opus','webm','aiff','aif']);
@@ -56,6 +57,14 @@ async function download(ctx,input={}){
   const item=normalizeSong(input.items[cp.index]);
   await ctx.task.update({stage:'resolve',message:`解析 ${item.artist} — ${item.title}`,done:cp.completed.length,failed:cp.failed.length});
   try{
+   if(item.source==='pt'){
+    // PT 种子：不落盘、不进资料库，直接提交宿主配置的下载器。
+    if(!cp.current){cp.current={song:item,quality:'pt',directory:'',storage:'downloader',stem:'',path:'',files:[],warnings:[],createdAt:Date.now(),pending:null};await checkpoint('prepared');}
+    const r=await ptSubmit(ctx,item,input.downloader||s.ptDownloader);
+    cp.current.warnings.push(r.state_uncertain?'下载器结果不确定，请先到下载器核对':'已提交下载器「'+(r.downloader||'默认')+'」'+(r.already_existed?'（任务已存在）':''));
+    cp.current.pt=r;
+    cp.completed.push(cp.current);cp.index++;cp.current=null;await checkpoint('item-done');
+   }else{
    if(!item.id||(!item.origin&&s.resolverMode!=='lx'&&!PROVIDERS[item.source]))throw new Error('该音源已移除，请重新搜索可用版本；已有本地文件仍可播放。');
    if(!cp.current){
     const song=await resolveSong(ctx,s,item,{probe:!!item.origin||s.resolverMode==='lx'}),ext=String(song.ext||'mp3').toLowerCase();
@@ -98,6 +107,7 @@ async function download(ctx,input={}){
    const {url,variants,alternatives,...saved}=record.song;record.song=saved;
    await checkpoint('remembering');await remember(ctx,record);
    cp.completed.push(record);record.files.forEach(f=>reserved.add(f.path));cp.index++;cp.current=null;await checkpoint('item-done');
+   }
   }catch(e){
    if(e.checkpointFailure||cp.step==='remembering'||cp.current?.pending&&await exists(ctx,cp.current.pending.path))throw e;
    cp.failed.push({song:item,error:errorText(e)});cp.index++;cp.current=null;await checkpoint('item-failed');

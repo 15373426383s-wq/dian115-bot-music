@@ -5224,7 +5224,8 @@ const qt = [
   { id: "netease", name: "网易云音乐", short: "网易云", color: "#e54b5c", hint: "搜索 · 单曲 · 歌单 · 歌词" },
   { id: "qq", name: "QQ 音乐", short: "QQ", color: "#15966b", hint: "搜索 · 多音质解析 · 歌词" },
   { id: "kugou", name: "酷狗音乐", short: "酷狗", color: "#2c83cd", hint: "搜索 · 歌单 · 歌词" },
-  { id: "migu", name: "咪咕音乐", short: "咪咕", color: "#b64dab", hint: "搜索 · 无损优先" },
+  { id: "migu", name: "咪咕音乐", short: "咪咕", color: "#b64dab", hint: "无损优先 · 公开免费接口已失效，暂不可用" },
+  { id: "pt", name: "PT 站", short: "PT", color: "#7c5cff", hint: "宿主已配置的 PT 站 · 种子搜索与推送下载器" },
   { id: "kuwo", name: "酷我音乐", short: "酷我", color: "#b77d16", hint: "自定义扩展 · 需导入支持酷我的音源", lxOnly: !0 }
 ], on = { sources: ["netease", "qq", "kugou", "migu"], resolverMode: "original", lxSourceId: "", lxCatalogs: {}, limit: 20, quality: "best", merge: !0, lyrics: !0, cover: !0, autoPlay: !1, destination: "", proxy: "", cookies: {}, cookieRecords: {}, downloadTimeout: 3600, maxDownloadMB: 0, theme: "system", reduceTransparency: !1 }, Bi = Object.fromEntries(qt.map((e) => [e.id, e.short])), wn = (e) => JSON.parse(JSON.stringify(e));
 function Mi(e = globalThis.crypto) {
