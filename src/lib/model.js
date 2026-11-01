@@ -18,14 +18,18 @@ export const cloneData=value=>JSON.parse(JSON.stringify(value));
 export function businessId(random=globalThis.crypto){return random?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);}
 export const QUALITY_LABEL={best:'最佳可用',lossless:'无损优先',high:'320 kbps 优先',standard:'128 kbps 优先'};
 export function settingsOf(value){const v={...DEFAULT_SETTINGS,...value};v.sources=[...new Set((Array.isArray(v.sources)?v.sources:DEFAULT_SETTINGS.sources).filter(x=>SOURCES.some(s=>s.id===x&&!s.archived)))];if(Array.isArray(value?.sources)&&value.sources.length&&!v.sources.length)v.sources=[...DEFAULT_SETTINGS.sources];if(!['original','compat','lx'].includes(v.resolverMode))v.resolverMode='original';v.lxSourceId=typeof v.lxSourceId==='string'?v.lxSourceId:'';v.lxCatalogs=Object.fromEntries(Object.entries(v.lxCatalogs&&typeof v.lxCatalogs==='object'?v.lxCatalogs:{}).filter(([id,keys])=>/^[a-f0-9]{32,64}$/.test(id)&&Array.isArray(keys)).map(([id,keys])=>[id,[...new Set(keys.filter(validSourceKey))].slice(0,16)]));v.limit=Math.min(50,Math.max(1,Math.floor(Number(v.limit))||20));if(!Object.prototype.hasOwnProperty.call(QUALITY_LABEL,v.quality))v.quality='best';
- // 免费模式（默认开启）：不依赖任何账号 Cookie 即可下载。原生音源下把音质上限
- // 压到 320 kbps（无损/会员音质需登录），并只保留经实测可免登录取链的音源
- // （网易云、酷狗）。关闭后可凭 Cookie 获取无损。自定义脚本(lx)自行管理鉴权。
+ // 免费模式（默认开启，自动自适应）：不填任何 CK 也能下载——把音质上限压到
+ // 320 kbps（无损/会员音质需登录），并只保留实测可免登录取链的音源（网易云、
+ // 酷狗）。一旦某个音源填了 CK，则自动保留该音源且不再限制音质（有 CK 用 CK）。
+ // 自定义脚本(lx)自行管理鉴权，不受免费模式限制。
  v.freeMode=v.freeMode!==false;
  if(v.freeMode&&v.resolverMode!=='lx'){
-  const free=v.sources.filter(id=>FREE_SOURCES.includes(id));
-  v.sources=free.length?free:[...FREE_SOURCES];
-  if(v.quality==='best'||v.quality==='lossless')v.quality='high';
+  const ck=v.cookies||{};
+  const has=id=>typeof ck[id]==='string'&&!!ck[id].trim();
+  const allowed=v.sources.filter(id=>FREE_SOURCES.includes(id)||has(id));
+  v.sources=allowed.length?allowed:[...FREE_SOURCES];
+  const anyCK=SOURCES.some(s=>has(s.id));
+  if(!anyCK&&(v.quality==='best'||v.quality==='lossless'))v.quality='high';
  }
  if(!['light','dark','system'].includes(v.theme))v.theme='system';v.destination=typeof v.destination==='string'?v.destination.trim():'';v.proxy=typeof v.proxy==='string'?v.proxy.trim():'';v.cookies=Object.fromEntries(SOURCES.map(s=>[s.id,typeof v.cookies?.[s.id]==='string'?v.cookies[s.id]:'']));v.cookieRecords=Object.fromEntries(SOURCES.map(s=>[s.id,Array.isArray(v.cookieRecords?.[s.id])?v.cookieRecords[s.id]:[]]));v.downloadTimeout=Math.max(60,Math.min(86400,Math.floor(Number(v.downloadTimeout))||3600));v.maxDownloadMB=Math.max(0,Math.min(1048576,Math.floor(Number(v.maxDownloadMB))||0));return v;}
 export function errorText(e){return String(e?.data?.error||e?.message||e||'操作失败').replace(/(?:Cookie|Authorization)\s*[:=][^\n]+/gi,'凭据已隐藏').replace(/([a-z][a-z0-9+.-]*:\/\/)[^\s/@]+:[^\s/@]+@/gi,'$1***@').replace(/(https?:\/\/[^\s?#]+)[?#][^\s]*/gi,'$1?…').slice(0,700);}
