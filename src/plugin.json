@@ -2,7 +2,7 @@
   "schema_version": 3,
   "id": "bot.dian-music",
   "name": "拾音 Music",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "author": "bot",
   "description": "在线聆听与后台音乐下载，支持自定义独立曲库、同步歌词、CK 管理和目录浏览，配备 Liquid Glass 播放器。内置「免费模式」：无需任何账号 Cookie 即可通过网易云/酷狗下载（最高 320 kbps）；支持搜索宿主已配置的 PT 站并把种子提交宿主下载器。",
   "requires": {

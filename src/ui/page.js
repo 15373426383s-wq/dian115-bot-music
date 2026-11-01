@@ -5225,9 +5225,9 @@ const qt = [
   { id: "qq", name: "QQ 音乐", short: "QQ", color: "#15966b", hint: "搜索 · 多音质解析 · 歌词" },
   { id: "kugou", name: "酷狗音乐", short: "酷狗", color: "#2c83cd", hint: "搜索 · 歌单 · 歌词" },
   { id: "migu", name: "咪咕音乐", short: "咪咕", color: "#b64dab", hint: "无损优先 · 公开免费接口已失效，暂不可用" },
-  { id: "pt", name: "PT 站", short: "PT", color: "#7c5cff", hint: "宿主已配置的 PT 站 · 种子搜索与推送下载器" },
+  { id: "pt", name: "PT 站", short: "PT", color: "#7c5cff", hint: "宿主已配置的 PT 站 · 种子搜索与推送下载器", lxOnly: !0 },
   { id: "kuwo", name: "酷我音乐", short: "酷我", color: "#b77d16", hint: "自定义扩展 · 需导入支持酷我的音源", lxOnly: !0 }
-], on = { sources: ["netease", "qq", "kugou", "migu"], resolverMode: "original", lxSourceId: "", lxCatalogs: {}, limit: 20, quality: "best", merge: !0, lyrics: !0, cover: !0, autoPlay: !1, destination: "", proxy: "", cookies: {}, cookieRecords: {}, downloadTimeout: 3600, maxDownloadMB: 0, theme: "system", reduceTransparency: !1 }, Bi = Object.fromEntries(qt.map((e) => [e.id, e.short])), wn = (e) => JSON.parse(JSON.stringify(e));
+], on = { sources: ["netease", "qq", "kugou", "migu"], resolverMode: "original", lxSourceId: "", lxCatalogs: {}, limit: 20, quality: "best", merge: !0, lyrics: !0, cover: !0, autoPlay: !1, destination: "", proxy: "", cookies: {}, cookieRecords: {}, downloadTimeout: 3600, maxDownloadMB: 0, ptDownloader: "", theme: "system", reduceTransparency: !1 }, Bi = Object.fromEntries(qt.map((e) => [e.id, e.short])), wn = (e) => JSON.parse(JSON.stringify(e));
 function Mi(e = globalThis.crypto) {
   var t;
   return ((t = e == null ? void 0 : e.randomUUID) == null ? void 0 : t.call(e)) || Date.now().toString(36) + "-" + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
@@ -6745,7 +6745,18 @@ const Yc = ["data-appearance"], Qc = {
   __name: "App",
   props: { ctx: Object },
   setup(e) {
-    const r = Jc(e.ctx), { ctx: a, activeScript: n, searchOptions: s, catalogLoading: o, sourceLabel: l, sourcesUpdated: u, content: y, isLocal: g, outcome: x, itemKey: C, removeBusy: M, confirmRemove: z, removeRecord: _, view: q, query: J, searchMode: V, source: H, filter: W, showFilters: ie, searching: oe, result: G, error: le, notice: ae, selected: ce, config: L, settingsDraft: h, favorites: b, library: X, runs: de, downloadRuns: xe, saving: Ue, details: pe, lyricsOpen: Fe, searchInput: st, audio: wt, current: fe, playing: it, buffering: Ye, resolving: Ge, playbackError: Qe, elapsed: ot, duration: Ze, volume: qe, shuffle: Be, repeat: p, lyricText: m, lyricError: w, favoriteKeys: P, activeRuns: S, list: A, lines: B, activeLine: F, sourceCount: N, navigate: T, search: Y, cancelSearch: U, favorite: ee, select: re, selectAll: ue, download: me, retry: he, cancel: Ae, saveSettings: _e, play: Me, togglePlay: Ce, next: je, seek: Wt, changeVolume: Oe, mute: Ke, audioError: nr, onTime: Ct, keydown: na } = r, Rr = /* @__PURE__ */ $(!1);
+    const r = Jc(e.ctx), { ctx: a, activeScript: n, searchOptions: s, catalogLoading: o, sourceLabel: l, sourcesUpdated: u, content: y, isLocal: g, outcome: x, itemKey: C, removeBusy: M, confirmRemove: z, removeRecord: _, view: q, query: J, searchMode: V, source: H, filter: W, showFilters: ie, searching: oe, result: G, error: le, notice: ae, selected: ce, config: L, settingsDraft: h, favorites: b, library: X, runs: de, downloadRuns: xe, saving: Ue, details: pe, lyricsOpen: Fe, searchInput: st, audio: wt, current: fe, playing: it, buffering: Ye, resolving: Ge, playbackError: Qe, elapsed: ot, duration: Ze, volume: qe, shuffle: Be, repeat: p, lyricText: m, lyricError: w, favoriteKeys: P, activeRuns: S, list: A, lines: B, activeLine: F, sourceCount: N, navigate: T, search: Y, cancelSearch: U, favorite: ee, select: re, selectAll: ue, download: me, retry: he, cancel: Ae, saveSettings: _e, play: Me, togglePlay: Ce, next: je, seek: Wt, changeVolume: Oe, mute: Ke, audioError: nr, onTime: Ct, keydown: na } = r, ptDls = /* @__PURE__ */ $([]), Rr = /* @__PURE__ */ $(!1);
+    (async () => {
+      try {
+        const _c = r.ctx, _t = await _c.tasks.run("query", "ptdl:" + Date.now().toString(36), { action: "pt-downloaders" });
+        const _end = ["succeeded", "failed", "cancelled", "attention_required"];
+        let _r = _t;
+        for (let _i = 0; _i < 30 && !_end.includes(_r.status); _i++)
+          await new Promise((_s) => setTimeout(_s, 350)), _r = await _c.tasks.get(_t.id);
+        _r.status === "succeeded" && (ptDls.value = ((_r.result || {}).downloaders || []).map((_x) => _x.name).filter(Boolean));
+      } catch {
+      }
+    })();
     function Va(ge) {
       h.value.destination = ge, Rr.value = !1;
     }
@@ -7690,6 +7701,20 @@ days`, tag: "MEMORIES / 回忆" }], ia = { queued: "等待中", running: "正在
                       }, j(f), 9, Qp))), 128))
                     ], 512), [
                       [Rn, d(h).quality]
+                    ])
+                  ]),
+                  i("label", null, [
+                    K("PT 下载器", -1),
+                    Ne(i("select", {
+                      "onUpdate:modelValue": (f) => d(h).ptDownloader = f
+                    }, [
+                      i("option", { value: "" }, "自动（站点默认 → 宿主默认）", -1),
+                      (v(!0), E(ne, null, ke(typeof ptDls !== "undefined" && ptDls ? d(ptDls) : [], (f) => (v(), E("option", {
+                        key: f,
+                        value: f
+                      }, j(f), 9, Qp))), 128))
+                    ], 512), [
+                      [Rn, d(h).ptDownloader]
                     ])
                   ]),
                   i("label", null, [
