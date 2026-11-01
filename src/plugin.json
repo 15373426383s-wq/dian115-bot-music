@@ -1,0 +1,68 @@
+{
+  "schema_version": 3,
+  "id": "bot.dian-music",
+  "name": "拾音 Music",
+  "version": "1.2.0",
+  "author": "bot",
+  "description": "在线聆听与后台音乐下载，支持自定义独立曲库、同步歌词、CK 管理和目录浏览，配备 Liquid Glass 播放器。",
+  "requires": {
+    "api": "3.9"
+  },
+  "icon": "ui/icon.svg",
+  "ui": {
+    "entry": "ui/page.js"
+  },
+  "menu": {
+    "title": "拾音 Music",
+    "order": 45
+  },
+  "jobs": [
+    {
+      "id": "query",
+      "entry": "jobs/query.js",
+      "title": "搜索与解析音乐",
+      "recover": "recover",
+      "queue": false,
+      "allow_overlap": true,
+      "timeout_seconds": 600
+    },
+    {
+      "id": "download",
+      "entry": "jobs/download.js",
+      "title": "保存与管理音乐",
+      "recover": "recover",
+      "allow_overlap": false,
+      "timeout_seconds": 86400
+    }
+  ],
+  "permissions": [],
+  "declared_usage": {
+    "purpose": "用户在页面主动搜索、解析官方歌曲/歌单、在线聆听或下载后播放、收藏与下载。自定义音源按脚本声明的曲库和动作接入，保留原始歌曲数据并绑定所属脚本，不限定为内置音乐平台。独立 JavaScript 实现，不执行 Python 或外部程序。",
+    "sites": [
+      "music.163.com（网易云搜索、WEAPI 歌单/歌曲/歌词/播放地址）",
+      "c.y.qq.com、m.y.qq.com、y.qq.com、dl.stream.qqmusic.qq.com、y.gtimg.cn（QQ 搜索、Referer、音质解析、歌词及封面）；u.y.qq.com（旧接口失败后调用官方网页 CgiGetVkey）",
+      "songsearch.kugou.com、m.kugou.com、m3ws.kugou.com、krcs.kugou.com、lyrics.kugou.com（酷狗搜索、分页歌单、播放与歌词）；wwwapi.kugou.com、www.kugou.com（旧接口失败后调用官方网页 getdata）",
+      "pd.musicapp.migu.cn、app.pd.nf.migu.cn（咪咕搜索及音质地址）",
+      "上述服务响应中提供的公开音频、歌词和封面 CDN；不访问内网或 115 Cookie 域",
+      "search.kuwo.cn（自定义音源扩展酷我搜索）；音源脚本由用户主动导入，可访问其配置的公开 HTTP(S) 服务和音频 CDN。请求与重定向逐跳检查地址，拒绝内网字面量、保留域和 115 域；不声称能替代宿主 DNS/网络出口策略。"
+    ],
+    "apis": [
+      "插件自身 settings、storage、http、cookies/import、jobs/runs、files/download；不读取系统设置、渠道、115 账号或 115 Cookie",
+      "GET /api/local-dirs：只读浏览宿主允许的目录及 CD2 挂载目录，供用户选择下载位置",
+      "用户主动按站点调用 CookieCloud read：网易云 music.163.com、QQ qq.com（筛除非音乐子域）、酷狗 kugou.com、咪咕 migu.cn；不调用 CookieCloud write",
+      "用户导入 .js 后使用插件自有加密 KV 保存脚本与校验值。隔离解释器仅桥接受限 HTTP、编解码与密码学，不暴露 ctx/settings/storage/files/CookieCloud；脚本请求使用独立音源会话，不共享音乐 CK。",
+      "私有 /hook/listen/<随机凭证>：需要宿主登录，仅转发本插件已解析、经地址校验的音频；不接受客户端指定目标 URL。最多保留 32 个两小时有效的加密 KV 播放凭证。"
+    ],
+    "files": "API 3.9 save_to 直接流式写入用户选择的非受保护宿主/CD2 挂载目录，未选择时写插件 downloads。歌词和封面直接写同一目录；已存在的同名文件使用递增编号。原生临时文件成功后改名；写入前后设检查点，结果未知不盲目覆盖。资料库从实际落盘路径读取歌词和 Range 播放。移除宿主资料库记录时保留宿主文件；确认移除插件自有记录时只删除 downloads 内文件。",
+    "credentials": "用户可手动填写 CK，或主动读取宿主 CookieCloud / 本插件会话中的所选音乐站点 CK。凭据加密保存在插件 settings，导入独立 music-source Cookie 会话，保留域/路径/Secure/HttpOnly/过期属性；不导出、不回写 CookieCloud、不记录或展示到日志。",
+    "cryptography": "网易云使用公开协议参数 AES-ECB、AES-CBC 与 raw RSA；QQ/酷狗歌词 Base64 解码。解码结果仅作为数据，不执行。 自定义音源兼容层使用 MD5、随机字节、AES-ECB/CBC、1024 位 raw RSA、zlib，均处理数据。页面 Worker 只对严格识别的字符串表、RC4 解码及有界轮转数据做静态展开，移除对应启动自校验调用并记录处理摘要；不执行用户函数或业务请求，原始文件与哈希保留。随后 Babel 转译在本地 Worker 中进行，转译结果只由 JS-Interpreter 逐步解释，无宿主原生 eval / Function 执行。",
+    "notifications": false,
+    "risk": "下载由用户点击保存发起。GET 音频以 save_to 流式落盘，默认 max_bytes=0（不设置固定大小上限），超时可由用户调整。按首记录完成/失败，全部失败则任务失败；未知写入结果保持待核对。在线听通过需登录的私有 HTTP 处理器，将上游音频逐块输出并转发单区间 Range/If-Range；不落盘、不预先缓存完整文件、不写入资料库。客户端断开、切歌或页面关闭时关闭流。已保存歌曲优先本地播放。播放凭证到期后需重新解析。没有公开回调、开放端口、通知或计划任务。音源访问与会员/地域权限由上游决定。 自定义音源可提供搜索、取链、歌词及封面，未知动作明确显示为未支持；音频地址通过流式响应头探测并校验格式。歌曲绑定脚本 ID、原文哈希、曲库标识和完整原始字段，避免切换设置后错用其他平台 ID。自定义音源解析地址，音频仍由原生 save_to 写盘；脚本初始化不等于真实取链可用。每次动作 180 秒/400 万步、单次脚本 HTTP 最多 60 秒、有限对象/定时器/请求、512 KiB 接口响应与解压限制。复杂正则拒绝；原生异步请求在返回前等待完成，取消回调不宣称立即中止底层连接。用户源可能包含自有 API 密钥，不记录原脚本或完整取链 URL。",
+    "bundled_libraries": "Vue 运行时内的 vuejs.org 链接仅用于错误文档，www.w3.org 是 SVG XML 命名空间；不加载远程脚本。 JS-Interpreter 与 Acorn 提供 ES5 解释器，移除未用 Node vm 外部依赖；fflate 提供有界 zlib；Babel standalone 只用于页面 Worker 将用户脚本转译为 ES5。库内环境探测、Function / eval 文本不代表在宿主原生执行源代码。源脚本的更新提示不会打开链接或自动替换脚本。"
+  },
+  "http": {
+    "entry": "jobs/stream.js",
+    "timeout_seconds": 60,
+    "public": false
+  }
+}
