@@ -6757,6 +6757,19 @@ const Yc = ["data-appearance"], Qc = {
       } catch {
       }
     })();
+    const disc = /* @__PURE__ */ $({ items: [], sections: [], loading: !0 });
+    (async () => {
+      try {
+        const _c = r.ctx, _t = await _c.tasks.run("query", "disc:" + Date.now().toString(36), { action: "discover", limit: 4 });
+        const _end = ["succeeded", "failed", "cancelled", "attention_required"];
+        let _r = _t;
+        for (let _i = 0; _i < 60 && !_end.includes(_r.status); _i++)
+          await new Promise((_s) => setTimeout(_s, 400)), _r = await _c.tasks.get(_t.id);
+        _r.status === "succeeded" && (disc.value = _r.result || { items: [], sections: [], loading: !1 });
+      } catch {
+        disc.value = { items: [], sections: [], loading: !1 };
+      }
+    })();
     function Va(ge) {
       h.value.destination = ge, Rr.value = !1;
     }
@@ -7149,6 +7162,41 @@ days`, tag: "MEMORIES / 回忆" }], ia = { queued: "等待中", running: "正在
                     i("p", null, j(f.caption), 1),
                     i("small", null, "搜索 " + j(f.artist), 1)
                   ], 8, _u)), 64))
+                ])
+              ]),
+              i("section", Cu, [
+                i("div", { class: "section-heading" }, [
+                  i("div", null, [
+                    i("span", { class: "section-overline" }, "MADE FOR YOU"),
+                    i("h2", null, "今日推荐")
+                  ], -1),
+                  i("span", { class: "section-caption" }, typeof disc !== "undefined" && disc && d(disc).loading ? "正在挑选…" : "点卡片直接播放，不用搜索。")
+                ], -1),
+                i("div", Du, [
+                  (v(!0), E(ne, null, ke(typeof disc !== "undefined" && disc ? d(disc).items : [], (f, be) => i("button", {
+                    key: f.source + ":" + f.id,
+                    class: "mood-card",
+                    onClick: (tt) => d(Me)(f, d(disc).items)
+                  }, [
+                    i("div", Iu, [
+                      k(Kt, {
+                        src: f.cover,
+                        tone: "rose"
+                      }, null, 8, ["src"]),
+                      i("span", Ou, [
+                        k(I, {
+                          name: "play",
+                          size: 19
+                        })
+                      ]),
+                      i("span", Nu, j(f.album || "网易云"), 1)
+                    ]),
+                    i("h3", null, [
+                      K(j(f.title), 1)
+                    ]),
+                    i("p", null, j(f.artist), 1),
+                    i("small", null, j(f.source === "netease" ? "网易云音乐" : f.source), 1)
+                  ], 8)), 128))
                 ])
               ]),
               i("section", Fu, [

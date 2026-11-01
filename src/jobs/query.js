@@ -3,6 +3,7 @@ import {PROVIDERS,sourceFromLink} from '../lib/providers.js';
 import {manageLX,resolveSong,closeLX,searchSource,songLyrics,songPicture} from '../lib/lx-sources.js';
 import {prepareListen} from '../lib/listen.js';
 import {ptSites,ptDownloaders,ptSearch} from '../lib/pt.js';
+import {discover} from '../lib/discover.js';
 export async function run(ctx,input={}){try{return await query(ctx,input);}finally{await closeLX(ctx);}}
 async function query(ctx,input={}){
  if(input.action==='capabilities')return{host_api:ctx.plugin?.host_api||'',version:ctx.plugin?.version||'',direct_download:true};
@@ -17,6 +18,7 @@ async function query(ctx,input={}){
  if(input.action==='lyrics')return{lyrics:await songLyrics(ctx,s,normalizeSong(input.song))};
  if(input.action==='pt-sites'){const sites=await ptSites(ctx);return{sites:sites.map(x=>({id:x.id,name:x.name,domain:x.domain,enabled:x.enabled!==false,searchEnabled:x.search_enabled!==false,downloader:x.downloader||'',priority:x.priority||0,lastError:x.last_error||''}))};}
  if(input.action==='pt-downloaders'){const list=await ptDownloaders(ctx);return{downloaders:list.map(x=>({name:x.name,type:x.type,isDefault:x.is_default===true,savePath:x.save_path||''}))};}
+ if(input.action==='discover')return await discover(ctx,s,{limit:input.limit,refresh:input.refresh===true});
  const query=String(input.query||'').trim();if(!query||query.length>500)throw new Error('请输入 1–500 个字符的搜索内容或官方链接');
  if(input.action==='single'||input.action==='playlist'){
    const source=sourceFromLink(query,input.action);const r=await PROVIDERS[source][input.action](ctx,s,query);return{...r,items:filterSongs(mergeSongs(r.items,s.merge),input.filter),sources:[{source,count:r.items.length,ok:true}],at:Date.now()};
